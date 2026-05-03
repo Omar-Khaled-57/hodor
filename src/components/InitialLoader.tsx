@@ -31,7 +31,7 @@ export default function InitialLoader() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="glass flex h-56 w-56 items-center justify-center rounded-[3rem] border border-border/50 shadow-2xl relative overflow-hidden"
+              className="glass flex h-56 w-56 items-center justify-center rounded-[3rem] border border-border/50 shadow-2xl p-8 relative overflow-hidden"
             >
               {/* Background ambient glow */}
               <div className="absolute inset-0 bg-accent/5 blur-2xl" />
