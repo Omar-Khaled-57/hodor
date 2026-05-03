@@ -31,7 +31,7 @@ export default function InitialLoader() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="glass flex h-56 w-56 items-center justify-center rounded-[3rem] border border-border/50 shadow-2xl p-8 relative overflow-hidden"
+              className="glass flex h-56 w-56 items-center justify-center rounded-[3rem] border border-border/50 shadow-2xl relative overflow-hidden p-8"
             >
               {/* Background ambient glow */}
               <div className="absolute inset-0 bg-accent/5 blur-2xl" />
@@ -50,16 +50,16 @@ export default function InitialLoader() {
 
                 {/* Colored Rising Image */}
                 <motion.div
-                  className="absolute bottom-0 left-0 w-full overflow-hidden"
-                  initial={{ height: '0%' }}
-                  animate={{ height: '100%' }}
+                  className="absolute inset-0"
+                  initial={{ clipPath: 'inset(100% 0% 0% 0%)' }}
+                  animate={{ clipPath: 'inset(-20% -20% -20% -20%)' }}
                   transition={{ 
                     duration: 1.5, 
                     delay: 0.5, 
-                    ease: [0.45, 0, 0.15, 1] // Elegant smooth easing
+                    ease: [0.45, 0, 0.15, 1] 
                   }}
                 >
-                  <div className="absolute bottom-0 left-0 w-full h-56">
+                  <div className="relative h-full w-full">
                     <Image 
                       src="/logo.png" 
                       alt="Loading Colored" 
