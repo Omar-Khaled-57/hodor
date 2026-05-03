@@ -16,6 +16,10 @@ export default function Providers({ children }: { children: ReactNode }) {
             <Toaster
               position="bottom-right"
               toastOptions={{
+                classNames: {
+                  description: '!text-text/80 !font-medium',
+                  title: '!text-text !font-bold',
+                },
                 style: {
                   background: 'var(--surface-2)',
                   border: '1px solid var(--border)',

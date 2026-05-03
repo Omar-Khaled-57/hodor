@@ -6,7 +6,8 @@ import LectureStatusBanner from '@/components/LectureStatusBanner';
 import StudentRow from '@/components/StudentRow';
 import StartLectureModal from '@/components/StartLectureModal';
 import AddEntryModal from '@/components/AddEntryModal';
-import { useStore } from '@/contexts/StoreContext';
+import LectureReportModal from '@/components/LectureReportModal';
+import { useStore, type Lecture } from '@/contexts/StoreContext';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +19,8 @@ export default function Home() {
   
   const [isStartOpen, setIsStartOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [reportLecture, setReportLecture] = useState<Lecture | null>(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   // Get students for the active lecture
   const feedStudents = activeLecture
@@ -33,9 +36,11 @@ export default function Home() {
     : [];
 
   const handleFinishLecture = () => {
-    if (confirm(t.confirmFinish + '\n' + t.confirmFinishDesc)) {
-      finishLecture();
-    }
+    if (!activeLecture) return;
+    // Capture the lecture snapshot, finish it, then show report
+    finishLecture();
+    setReportLecture({ ...activeLecture, endedAt: new Date().toISOString() });
+    setIsReportOpen(true);
   };
 
   return (
@@ -135,6 +140,13 @@ export default function Home() {
 
       <StartLectureModal isOpen={isStartOpen} onClose={() => setIsStartOpen(false)} />
       <AddEntryModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      {reportLecture && (
+        <LectureReportModal
+          isOpen={isReportOpen}
+          onClose={() => { setIsReportOpen(false); }}
+          lecture={reportLecture}
+        />
+      )}
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import initialMock from '@/data/mock.json';
+import { useLocale } from '@/contexts/LocaleContext';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -178,6 +179,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, buildInitialState);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const { t, locale } = useLocale();
 
   const activeLecture =
     state.lectures.find(l => l.id === state.activeLectureId) ?? null;
@@ -243,8 +245,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         uid: target.uid,
         scannedAt: new Date().toISOString(),
       });
-      toast.success(`📡 ${target.nameEN}`, {
-        description: 'RFID scan detected',
+      toast.success(`📡 ${locale === 'ar' ? target.nameAR : target.nameEN}`, {
+        description: t.toastNewScan,
         duration: 2500,
       });
     }, MOCK_SCAN_INTERVAL);

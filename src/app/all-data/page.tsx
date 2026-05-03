@@ -42,13 +42,15 @@ export default function AllDataPage() {
   // Filter and Sort
   let displayedStudents = state.students.filter(s => {
     if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      s.nameAR.toLowerCase().includes(q) ||
-      s.nameEN.toLowerCase().includes(q) ||
-      s.id.toLowerCase().includes(q) ||
-      s.uid.toLowerCase().includes(q)
-    );
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    
+    const ar = (s.nameAR || '').toLowerCase();
+    const en = (s.nameEN || '').toLowerCase();
+    const id = (s.id || '').toLowerCase();
+    const uid = (s.uid || '').toLowerCase();
+
+    return ar.includes(q) || en.includes(q) || id.includes(q) || uid.includes(q);
   });
 
   displayedStudents = displayedStudents.sort((a, b) => {
@@ -73,25 +75,37 @@ export default function AllDataPage() {
       <Navbar />
       
       <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4"
+        >
           <div>
             <h1 className="text-3xl font-black text-text tracking-tight">{t.navAllData}</h1>
             <p className="text-text-muted mt-1">{state.students.length} students total</p>
           </div>
           
           {isAdmin && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setIsAddOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 font-bold text-bg shadow-[0_0_15px_var(--color-accent-glow)] transition-transform hover:scale-105 active:scale-95"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 font-bold text-bg shadow-[0_0_15px_var(--color-accent-glow)]"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
               {t.addEntry}
-            </button>
+            </motion.button>
           )}
-        </div>
+        </motion.div>
 
         {/* Toolbar */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 bg-surface p-2 rounded-2xl border border-border">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
+          className="mb-6 flex flex-col sm:flex-row gap-4 bg-surface p-2 rounded-2xl border border-border"
+        >
           <div className="relative flex-1">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <input
@@ -146,10 +160,15 @@ export default function AllDataPage() {
               </AnimatePresence>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* List */}
-        <div className="space-y-1">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="space-y-1"
+        >
           <AnimatePresence mode="popLayout">
             {displayedStudents.length > 0 ? (
               displayedStudents.map((student, i) => (
@@ -165,7 +184,7 @@ export default function AllDataPage() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </main>
 
       <AddEntryModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />

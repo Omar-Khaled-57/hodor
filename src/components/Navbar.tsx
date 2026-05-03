@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStore } from '@/contexts/StoreContext';
@@ -118,72 +119,112 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Menu Dropdown */}
-      {isMenuOpen && (
-        <div className="md:hidden mt-4 pt-4 border-t border-border flex flex-col gap-4 pb-2">
-          <div className="flex flex-col gap-3">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    isActive ? 'bg-accent/10 text-accent' : 'text-text-muted hover:text-text hover:bg-surface-2'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="h-px w-full bg-border"></div>
-
-          {isAdmin ? (
-            <div className="flex flex-col gap-3 px-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-text-muted">Status</span>
-                <span className="rounded-full bg-surface-2 px-3 py-1 text-xs font-bold text-accent border border-border">
-                  {t.adminBadge}
-                </span>
-              </div>
-              {showGlobalEdit && (
-                <button
-                  onClick={() => {
-                    toggleGlobalEdit();
-                    setIsMenuOpen(false);
-                  }}
-                  className={`w-full text-left rounded-lg px-3 py-2 text-sm font-bold transition-colors ${
-                    state.globalAllowSelfEdit 
-                      ? 'bg-danger/10 text-danger hover:bg-danger/20' 
-                      : 'bg-accent/10 text-accent hover:bg-accent/20'
-                  }`}
-                >
-                  {state.globalAllowSelfEdit ? t.blockEdit : t.allowEdit}
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  logout();
-                  setIsMenuOpen(false);
-                }}
-                className="w-full text-left rounded-lg px-3 py-2 text-sm font-medium text-danger hover:bg-danger/10 transition-colors"
-              >
-                {t.navLogout}
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              onClick={() => setIsMenuOpen(false)}
-              className="w-full text-center rounded-xl bg-accent px-4 py-2 text-sm font-bold text-bg transition-transform active:scale-95"
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            key="mobile-menu"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className="md:hidden overflow-hidden"
+          >
+            <motion.div
+              initial={{ y: -8 }}
+              animate={{ y: 0 }}
+              exit={{ y: -8 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="mt-4 pt-4 border-t border-border flex flex-col gap-4 pb-2"
             >
-              {t.navLogin}
-            </Link>
-          )}
-        </div>
-      )}
+              <div className="flex flex-col gap-1">
+                {navLinks.map((link, i) => {
+                  const isActive = pathname === link.href;
+                  return (
+                    <motion.div
+                      key={link.href}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, delay: i * 0.06 }}
+                    >
+                      <Link
+                        href={link.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`flex items-center px-3 py-2.5 text-sm font-semibold rounded-xl transition-colors ${
+                          isActive ? 'bg-accent/10 text-accent' : 'text-text-muted hover:text-text hover:bg-surface-2'
+                        }`}
+                      >
+                        {isActive && <span className="mr-2 h-1.5 w-1.5 rounded-full bg-accent" />}
+                        {link.label}
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2, delay: 0.1 }}
+                className="h-px w-full bg-border"
+              />
+
+              {isAdmin ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: 0.15 }}
+                  className="flex flex-col gap-2 px-1"
+                >
+                  <div className="flex items-center justify-between px-2">
+                    <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Status</span>
+                    <span className="rounded-full bg-surface-2 px-3 py-1 text-xs font-bold text-accent border border-border">
+                      {t.adminBadge}
+                    </span>
+                  </div>
+                  {showGlobalEdit && (
+                    <button
+                      onClick={() => {
+                        toggleGlobalEdit();
+                        setIsMenuOpen(false);
+                      }}
+                      className={`w-full text-left rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+                        state.globalAllowSelfEdit 
+                          ? 'bg-danger/10 text-danger hover:bg-danger/20' 
+                          : 'bg-accent/10 text-accent hover:bg-accent/20'
+                      }`}
+                    >
+                      {state.globalAllowSelfEdit ? t.blockEdit : t.allowEdit}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full text-left rounded-xl px-3 py-2.5 text-sm font-semibold text-danger hover:bg-danger/10 transition-colors"
+                  >
+                    {t.navLogout}
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: 0.15 }}
+                >
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex w-full items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-bg transition-transform active:scale-95"
+                  >
+                    {t.navLogin}
+                  </Link>
+                </motion.div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

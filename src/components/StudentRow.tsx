@@ -33,10 +33,18 @@ export default function StudentRow({ student, index }: StudentRowProps) {
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
-        className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl bg-surface p-4 transition-all hover:bg-surface-2 border border-border/50 hover:border-border hover:shadow-[0_0_15px_rgba(0,232,162,0.1)] mb-3"
+        layout
+        initial={{ opacity: 0, y: 16, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95, y: -8, transition: { duration: 0.18 } }}
+        transition={{
+          type: 'spring',
+          stiffness: 380,
+          damping: 28,
+          delay: Math.min(index * 0.04, 0.4),
+        }}
+        whileHover={{ y: -2, boxShadow: '0 8px 30px rgba(0,232,162,0.12)' }}
+        className="group relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl bg-surface p-4 border border-border/50 hover:border-border mb-3 cursor-default"
       >
         {/* Info Section */}
         <div className="flex items-center gap-4 flex-1">

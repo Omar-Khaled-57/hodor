@@ -95,3 +95,46 @@ html:not(.dark) .glass {
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(0, 196, 122, 0.2);
 }
+
+/* ─── Print / PDF Styles ───────────────────────────────────────────────── */
+@media print {
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  /* Hide everything except the print report */
+  body > * {
+    display: none !important;
+  }
+
+  /* Show the print report */
+  #hodor-print-report {
+    display: block !important;
+  }
+
+  @page {
+    margin: 1.5cm 2cm;
+    size: A4 portrait;
+  }
+}
+
+/* The actual printed page content – rendered via JS before printing */
+#hodor-print-report.printing {
+  display: block !important;
+  font-family: 'Inter', sans-serif;
+  color: #060b14;
+  background: #ffffff;
+}
+
+/* ─── Sonner Toast Fixes ────────────────────────────────────────────────── */
+/* Fix description text being too dim in dark mode */
+html.dark [data-sonner-toast] [data-description] {
+  color: var(--text) !important;
+  opacity: 0.8;
+}
+
+/* Ensure title stays crisp in dark mode too */
+html.dark [data-sonner-toast] [data-title] {
+  color: var(--text) !important;
+}
