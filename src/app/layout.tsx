@@ -17,10 +17,14 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://hodor-devora.vercel.app'),
   title: 'Hodor — RFID Attendance',
   description: 'Real-time bilingual RFID attendance tracking system by Devora',
   keywords: ['attendance', 'RFID', 'university', 'lecture'],
   authors: [{ name: 'Devora' }],
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
