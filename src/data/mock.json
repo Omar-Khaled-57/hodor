@@ -9,7 +9,87 @@
       "scannedAt": "2026-05-03T14:05:00Z",
       "allowSelfEdit": true
     },
-    ...
+    {
+      "uid": "E5F6G7H8",
+      "id": "20210002",
+      "nameAR": "سارة محمود حسن",
+      "nameEN": "Sara Mahmoud Hassan",
+      "percentage": 94,
+      "scannedAt": "2026-05-03T14:07:22Z",
+      "allowSelfEdit": false
+    },
+    {
+      "uid": "J9K0L1M2",
+      "id": "20210003",
+      "nameAR": "خالد إبراهيم منصور",
+      "nameEN": "Khaled Ibrahim Mansour",
+      "percentage": 76,
+      "scannedAt": "2026-05-03T14:10:15Z",
+      "allowSelfEdit": true
+    },
+    {
+      "uid": "N3P4Q5R6",
+      "id": "20210004",
+      "nameAR": "ليلى يوسف كمال",
+      "nameEN": "Layla Youssef Kamal",
+      "percentage": 89,
+      "scannedAt": "2026-05-03T14:12:45Z",
+      "allowSelfEdit": true
+    },
+    {
+      "uid": "S7T8U9V0",
+      "id": "20210005",
+      "nameAR": "عمر فاروق عثمان",
+      "nameEN": "Omar Farouk Osman",
+      "percentage": 82,
+      "scannedAt": "2026-05-03T14:15:30Z",
+      "allowSelfEdit": false
+    },
+    {
+      "uid": "W1X2Y3Z4",
+      "id": "20210006",
+      "nameAR": "مريم عبد الرحمن",
+      "nameEN": "Mariam Abdel Rahman",
+      "percentage": 91,
+      "scannedAt": "2026-05-03T14:18:10Z",
+      "allowSelfEdit": true
+    },
+    {
+      "uid": "B5C6D7E8",
+      "id": "20210007",
+      "nameAR": "ياسين طارق محمود",
+      "nameEN": "Yassin Tarek Mahmoud",
+      "percentage": 68,
+      "scannedAt": "2026-05-03T14:20:05Z",
+      "allowSelfEdit": true
+    },
+    {
+      "uid": "F9G0H1I2",
+      "id": "20210008",
+      "nameAR": "نور الهدى مصطفى",
+      "nameEN": "Nour El Hoda Mostafa",
+      "percentage": 97,
+      "scannedAt": "2026-05-03T14:22:50Z",
+      "allowSelfEdit": false
+    },
+    {
+      "uid": "J3K4L5M6",
+      "id": "20210009",
+      "nameAR": "يوسف هاني جلال",
+      "nameEN": "Youssef Hany Galal",
+      "percentage": 74,
+      "scannedAt": "2026-05-03T14:25:12Z",
+      "allowSelfEdit": true
+    },
+    {
+      "uid": "P7Q8R9S0",
+      "id": "20210010",
+      "nameAR": "هناء مجدي سليم",
+      "nameEN": "Hana Magdy Selim",
+      "percentage": 85,
+      "scannedAt": "2026-05-03T14:28:40Z",
+      "allowSelfEdit": true
+    }
   ],
   "lectures": [
     {
@@ -17,15 +97,20 @@
       "name": "Computer Networks",
       "nameAR": "شبكات الحاسب",
       "startedAt": "2026-05-03T14:00:00Z",
-      "endedAt": null,
+      "endedAt": "2026-05-03T16:00:00Z",
       "attendees": [
-        "A1B2C3D1",
-        "A1B2C3D2",
-        "A1B2C3D3",
-        "A1B2C3D4",
-        "A1B2C3D4",
-        "A1B2C3D4"
+        "A1B2C3D4", "E5F6G7H8", "J9K0L1M2", "N3P4Q5R6", 
+        "S7T8U9V0", "W1X2Y3Z4", "B5C6D7E8", "F9G0H1I2", 
+        "J3K4L5M6", "P7Q8R9S0"
       ]
+    },
+    {
+      "id": "LEC-002",
+      "name": "Database Systems",
+      "nameAR": "نظم قواعد البيانات",
+      "startedAt": "2026-05-03T16:30:00Z",
+      "endedAt": null,
+      "attendees": ["A1B2C3D4", "N3P4Q5R6", "W1X2Y3Z4", "F9G0H1I2"]
     }
   ],
   "admin": {
