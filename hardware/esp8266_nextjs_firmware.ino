@@ -14,7 +14,7 @@
 // ── WiFi & Server ─────────────────────────────────────────────
 const char *WIFI_SSID = "X";
 const char *WIFI_PASSWORD = "792005mo";
-const char *SERVER_URL = "http://YOUR_LOCAL_IP:3000/api/scan"; // Change YOUR_LOCAL_IP to your PC's IP address
+const char *SERVER_URL = "http://10.147.37.30:3000/api/scan"; // Change YOUR_LOCAL_IP to your PC's IP address
 
 // ── Hardware ─────────────────────────────────────────────────
 MFRC522 rfid(SS_PIN, RST_PIN);
