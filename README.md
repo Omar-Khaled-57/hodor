@@ -65,6 +65,17 @@
    npm run build
    ```
 
+### 🔌 Hardware Setup (ESP8266 & RFID)
+
+The scanning system is now fully integrated with Next.js, eliminating the need for a separate PHP (XAMPP) server!
+
+1. Open `hardware/esp8266_nextjs_firmware.ino` in your Arduino IDE.
+2. Update `WIFI_SSID` and `WIFI_PASSWORD` with your local WiFi credentials.
+3. Replace `YOUR_LOCAL_IP` in the `SERVER_URL` on line 17 with your PC's local IP address (e.g., `http://192.168.1.5:3000/api/scan`). Make sure your PC and the ESP8266 are on the same WiFi network.
+4. Connect your ESP8266 microcontroller to your PC via USB.
+5. Compile and upload the `.ino` firmware to the microcontroller.
+6. Start the Next.js server (`npm run dev`). When you scan an RFID card, the ESP8266 will send the UID directly to Next.js and beep!
+
 ---
 
 ## 📂 Project Structure
@@ -87,8 +98,8 @@ src/
 This project is developed with ❤️ by the **Devora Team** at **OTU** as part of the Embedded Systems curriculum.
 
 - **Frontend**: Next.js & React 19
-- **Backend**: PHP (Porting soon)
-- **Hardware**: RFID Module & Embedded Controllers (Details coming soon)
+- **Backend**: Next.js API Routes (Migrated from PHP)
+- **Hardware**: ESP8266 & MFRC522 RFID Module
 
 ---
 
@@ -99,4 +110,4 @@ Internal University Project - OTU.
 ---
 
 > [!NOTE]
-> This is the **Frontend** repository. Integration with the hardware and backend services is currently in progress.
+> The system now runs entirely on Next.js, bridging the frontend UI and the ESP8266 hardware seamlessly without third-party backend dependencies.
