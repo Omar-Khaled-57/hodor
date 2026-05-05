@@ -173,7 +173,7 @@ const StoreContext = createContext<StoreContextValue>({
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
-const MOCK_SCAN_INTERVAL = 8000; // ms
+
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, buildInitialState);
@@ -224,38 +224,65 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   }, [state.students, state.lectures, state.globalAllowSelfEdit, state.activeLectureId, isMounted]);
 
-  // Auto-mock interval: scan a random student not yet in active lecture
+// Hardware scanning polling interval
   useEffect(() => {
     if (!state.activeLectureId) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       return;
     }
-    intervalRef.current = setInterval(() => {
-      const attendees =
-        state.lectures.find(l => l.id === state.activeLectureId)?.attendees ?? [];
-      const unscanned = state.students.filter(s => !attendees.includes(s.uid));
-      if (unscanned.length === 0) {
-        clearInterval(intervalRef.current!);
-        return;
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/pending_scan';
+
+    intervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(apiUrl);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data && data.uid) {
+          // Consume the scan so we don't process it again
+          await fetch(apiUrl, {
+            method: 'DELETE',
+          });
+
+          const attendees =
+            state.lectures.find(l => l.id === state.activeLectureId)?.attendees ?? [];
+          
+          if (attendees.includes(data.uid)) {
+            // Already scanned in this lecture
+            return;
+          }
+
+          const target = state.students.find(s => s.uid === data.uid);
+
+          if (target) {
+            dispatch({
+              type: 'SCAN_STUDENT',
+              lectureId: state.activeLectureId!,
+              uid: target.uid,
+              scannedAt: new Date().toISOString(),
+            });
+            toast.success(`📡 ${locale === 'ar' ? target.nameAR : target.nameEN}`, {
+              description: t.toastNewScan,
+              duration: 2500,
+            });
+          } else {
+            toast.error(`Unknown Card: ${data.uid}`, {
+              description: 'This card is not registered in the system.',
+              duration: 2500,
+            });
+          }
+        }
+      } catch (err) {
+        // Silently ignore network errors during polling
       }
-      const target = unscanned[Math.floor(Math.random() * unscanned.length)];
-      dispatch({
-        type: 'SCAN_STUDENT',
-        lectureId: state.activeLectureId!,
-        uid: target.uid,
-        scannedAt: new Date().toISOString(),
-      });
-      toast.success(`📡 ${locale === 'ar' ? target.nameAR : target.nameEN}`, {
-        description: t.toastNewScan,
-        duration: 2500,
-      });
-    }, MOCK_SCAN_INTERVAL);
+    }, 1500);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.activeLectureId]);
+  }, [state.activeLectureId, state.students]);
 
   const addStudent = useCallback((student: Student) => {
     dispatch({ type: 'ADD_STUDENT', student });

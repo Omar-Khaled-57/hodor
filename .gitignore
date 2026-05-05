@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#extra
+CLAUDE.md
+AGENT.md
+TASK.md
+
+just-front.rar
+/m7md
