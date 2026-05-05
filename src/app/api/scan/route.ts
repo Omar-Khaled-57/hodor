@@ -29,13 +29,26 @@ export async function POST(request: Request) {
       return NextResponse.json(result);
     }
 
+    let already = false;
+    try {
+      const ATTENDEES_FILE = path.join(os.tmpdir(), 'rfid_active_attendees.json');
+      if (fs.existsSync(ATTENDEES_FILE)) {
+        const attendees = JSON.parse(fs.readFileSync(ATTENDEES_FILE, 'utf-8'));
+        if (Array.isArray(attendees) && attendees.includes(uid)) {
+          already = true;
+        }
+      }
+    } catch (e) {
+      // Ignore read errors
+    }
+
     const result = {
       status: 'success',
       uid: uid,
       name: student.nameEN, // ESP screen will show English name
       student_id: student.id,
       known: true,
-      already: false, // We always return false here, Next.js frontend handles the actual duplication logic
+      already: already, // Computed based on synced frontend state
       timestamp: new Date().toISOString(),
     };
 

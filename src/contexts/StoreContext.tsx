@@ -237,6 +237,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   }, [state.students, state.lectures, state.globalAllowSelfEdit, state.activeLectureId, isMounted]);
 
+  // Sync active attendees to backend for ESP8266 duplicate detection screen
+  useEffect(() => {
+    if (!isMounted) return;
+    const attendees = activeLecture?.attendees || [];
+    fetch('/api/sync_lecture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attendees }),
+    }).catch(() => {});
+  }, [activeLecture?.attendees, isMounted]);
+
   // Hardware scanning polling interval
   useEffect(() => {
     if (!state.activeLectureId) {
