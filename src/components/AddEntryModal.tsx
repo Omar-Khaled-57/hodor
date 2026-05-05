@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useStore } from '@/contexts/StoreContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,13 +13,31 @@ interface AddEntryModalProps {
 
 export default function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
   const { t } = useLocale();
-  const { addStudent } = useStore();
+  const { addStudent, state, clearUnknownUid } = useStore();
   
   const [uid, setUid] = useState('');
   const [id, setId] = useState('');
   const [nameEN, setNameEN] = useState('');
   const [nameAR, setNameAR] = useState('');
   const [allowSelfEdit, setAllowSelfEdit] = useState(true);
+  const [uidFlash, setUidFlash] = useState(false);
+
+  // Auto-fill UID when an unknown card is scanned while the modal is open
+  useEffect(() => {
+    if (isOpen && state.lastUnknownUid) {
+      setUid(state.lastUnknownUid);
+      clearUnknownUid();
+      // Brief highlight animation on the UID field
+      setUidFlash(true);
+      setTimeout(() => setUidFlash(false), 1200);
+    }
+  }, [isOpen, state.lastUnknownUid, clearUnknownUid]);
+
+  // Clear any pending unknown UID when the modal is dismissed
+  const handleClose = () => {
+    clearUnknownUid();
+    onClose();
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +59,7 @@ export default function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
     setNameEN('');
     setNameAR('');
     setAllowSelfEdit(true);
-    onClose();
+    handleClose();
   };
 
   return (
@@ -52,7 +70,7 @@ export default function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute inset-0 bg-bg/80 backdrop-blur-sm"
           />
           
@@ -70,8 +88,26 @@ export default function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-text-muted">{t.studentUID}</label>
-                    <input type="text" required value={uid} onChange={e => setUid(e.target.value)} placeholder={t.uidPlaceholder} className="w-full rounded-xl border border-border bg-surface-2 px-4 py-2 text-text focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent" />
+                    <label className="mb-1.5 block text-sm font-medium text-text-muted">
+                      {t.studentUID}
+                      {uidFlash && (
+                        <span className="ml-2 text-xs font-semibold text-accent animate-pulse">
+                          ✦ Card detected
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={uid}
+                      onChange={e => setUid(e.target.value)}
+                      placeholder={t.uidPlaceholder}
+                      className={`w-full rounded-xl border px-4 py-2 text-text focus:outline-none focus:ring-1 focus:ring-accent bg-surface-2 transition-all duration-300 ${
+                        uidFlash
+                          ? 'border-accent ring-1 ring-accent shadow-[0_0_12px_var(--color-accent-glow)]'
+                          : 'border-border focus:border-accent'
+                      }`}
+                    />
                   </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-text-muted">{t.studentID}</label>
@@ -99,7 +135,7 @@ export default function AddEntryModal({ isOpen, onClose }: AddEntryModalProps) {
               </div>
 
               <div className="mt-8 flex gap-3">
-                <button type="button" onClick={onClose} className="flex-1 rounded-xl bg-surface-2 px-4 py-3 font-semibold text-text hover:bg-surface-2/80">{t.cancel}</button>
+                <button type="button" onClick={handleClose} className="flex-1 rounded-xl bg-surface-2 px-4 py-3 font-semibold text-text hover:bg-surface-2/80">{t.cancel}</button>
                 <button type="submit" className="flex-1 rounded-xl bg-accent px-4 py-3 font-bold text-bg hover:scale-[1.02] active:scale-95">{t.save}</button>
               </div>
             </form>

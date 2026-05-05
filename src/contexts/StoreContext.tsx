@@ -42,6 +42,8 @@ interface StoreState {
   /** UIDs newly scanned in this session — used for entrance animation */
   recentScans: string[];
   globalAllowSelfEdit: boolean;
+  /** Last UID that was scanned but not found in the system */
+  lastUnknownUid: string | null;
 }
 
 type Action =
@@ -53,6 +55,8 @@ type Action =
   | { type: 'SCAN_STUDENT'; lectureId: string; uid: string; scannedAt: string }
   | { type: 'CLEAR_RECENT_SCANS' }
   | { type: 'TOGGLE_GLOBAL_EDIT' }
+  | { type: 'UNKNOWN_SCAN'; uid: string }
+  | { type: 'CLEAR_UNKNOWN_UID' }
   | { type: 'HYDRATE'; payload: Partial<StoreState> };
 
 // ─── Reducer ─────────────────────────────────────────────────────────────────
@@ -128,6 +132,12 @@ function reducer(state: StoreState, action: Action): StoreState {
     case 'TOGGLE_GLOBAL_EDIT':
       return { ...state, globalAllowSelfEdit: !state.globalAllowSelfEdit };
 
+    case 'UNKNOWN_SCAN':
+      return { ...state, lastUnknownUid: action.uid };
+
+    case 'CLEAR_UNKNOWN_UID':
+      return { ...state, lastUnknownUid: null };
+
     default:
       return state;
   }
@@ -142,6 +152,7 @@ function buildInitialState(): StoreState {
     activeLectureId: null,
     recentScans: [],
     globalAllowSelfEdit: true,
+    lastUnknownUid: null,
   };
 }
 
@@ -157,18 +168,20 @@ interface StoreContextValue {
   finishLecture: () => void;
   scanStudent: (uid: string) => void;
   toggleGlobalEdit: () => void;
+  clearUnknownUid: () => void;
 }
 
 const StoreContext = createContext<StoreContextValue>({
-  state: { students: [], lectures: [], activeLectureId: null, recentScans: [], globalAllowSelfEdit: true },
+  state: { students: [], lectures: [], activeLectureId: null, recentScans: [], globalAllowSelfEdit: true, lastUnknownUid: null },
   activeLecture: null,
-  addStudent: () => {},
-  editStudent: () => {},
-  deleteStudent: () => {},
-  startLecture: () => {},
-  finishLecture: () => {},
-  scanStudent: () => {},
-  toggleGlobalEdit: () => {},
+  addStudent: () => { },
+  editStudent: () => { },
+  deleteStudent: () => { },
+  startLecture: () => { },
+  finishLecture: () => { },
+  scanStudent: () => { },
+  toggleGlobalEdit: () => { },
+  clearUnknownUid: () => { },
 });
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -192,7 +205,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       try {
         const parsed = JSON.parse(data);
         dispatch({ type: 'HYDRATE', payload: parsed });
-      } catch (e) {}
+      } catch (e) { }
     } else {
       // Legacy fallback
       const legacyId = localStorage.getItem('hodor-active-lecture');
@@ -206,7 +219,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         try {
           const parsed = JSON.parse(e.newValue);
           dispatch({ type: 'HYDRATE', payload: parsed });
-        } catch (err) {}
+        } catch (err) { }
       }
     };
     window.addEventListener('storage', handleStorage);
@@ -224,7 +237,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   }, [state.students, state.lectures, state.globalAllowSelfEdit, state.activeLectureId, isMounted]);
 
-// Hardware scanning polling interval
+  // Hardware scanning polling interval
   useEffect(() => {
     if (!state.activeLectureId) {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -247,7 +260,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
           const attendees =
             state.lectures.find(l => l.id === state.activeLectureId)?.attendees ?? [];
-          
+
           if (attendees.includes(data.uid)) {
             // Already scanned in this lecture
             return;
@@ -267,9 +280,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               duration: 2500,
             });
           } else {
-            toast.error(`Unknown Card: ${data.uid}`, {
-              description: 'This card is not registered in the system.',
-              duration: 2500,
+            dispatch({ type: 'UNKNOWN_SCAN', uid: data.uid });
+            toast.warning(`📡 ${locale === 'ar' ? 'بطاقة غير مسجلة' : 'Unknown Card: ' + data.uid}`, {
+              description: locale === 'ar' ? 'يجب تسجيل الطالب أولاً.' : 'Card not registered.',
+              duration: 3000,
             });
           }
         }
@@ -281,7 +295,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.activeLectureId, state.students]);
 
   const addStudent = useCallback((student: Student) => {
@@ -334,6 +348,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         finishLecture,
         scanStudent,
         toggleGlobalEdit: useCallback(() => dispatch({ type: 'TOGGLE_GLOBAL_EDIT' }), []),
+        clearUnknownUid: useCallback(() => dispatch({ type: 'CLEAR_UNKNOWN_UID' }), []),
       }}
     >
       {children}
