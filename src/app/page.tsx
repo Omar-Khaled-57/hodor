@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
+import SimulationBanner from '@/components/SimulationBanner';
 import LectureStatusBanner from '@/components/LectureStatusBanner';
 import StudentRow from '@/components/StudentRow';
 import StartLectureModal from '@/components/StartLectureModal';
@@ -48,6 +49,7 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
+        <SimulationBanner />
         {activeLecture ? (
           <>
             <LectureStatusBanner />

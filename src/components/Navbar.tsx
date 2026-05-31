@@ -13,7 +13,7 @@ import LangToggle from './LangToggle';
 export default function Navbar() {
   const { t } = useLocale();
   const { isAdmin, logout } = useAuth();
-  const { state, toggleGlobalEdit } = useStore();
+  const { state, toggleGlobalEdit, simulationActive, startSimulation, stopSimulation } = useStore();
   const pathname = usePathname();
   const showGlobalEdit = pathname === '/' || pathname === '/all-data';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -99,6 +99,27 @@ export default function Navbar() {
             </Link>
           )}
 
+          {/* Simulation toggle - visible to all visitors */}
+          <div className="hidden md:flex items-center">
+            {simulationActive ? (
+              <button
+                onClick={() => { stopSimulation(); }}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-danger/10 border border-danger/30 px-3 py-1.5 text-xs font-bold text-danger transition-all hover:bg-danger/20 active:scale-95"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                {t.stopSimulation}
+              </button>
+            ) : (
+              <button
+                onClick={startSimulation}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-accent/10 border border-accent/20 px-3 py-1.5 text-xs font-bold text-accent transition-all hover:bg-accent/20 active:scale-95"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                {t.startSimulation}
+              </button>
+            )}
+          </div>
+
           <div className="hidden md:block h-6 w-px bg-border mx-1"></div>
 
           <LangToggle />
@@ -160,6 +181,38 @@ export default function Navbar() {
                   );
                 })}
               </div>
+
+              {/* Simulation toggle - mobile */}
+              <motion.div
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2, delay: 0.08 }}
+                className="px-1"
+              >
+                {simulationActive ? (
+                  <button
+                    onClick={() => {
+                      stopSimulation();
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl bg-danger/10 border border-danger/30 px-3 py-2.5 text-sm font-bold text-danger transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    {t.stopSimulation}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      startSimulation();
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl bg-accent/10 border border-accent/20 px-3 py-2.5 text-sm font-bold text-accent transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                    {t.startSimulation}
+                  </button>
+                )}
+              </motion.div>
 
               <motion.div
                 initial={{ opacity: 0 }}

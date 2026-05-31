@@ -44,6 +44,12 @@ interface StoreState {
   globalAllowSelfEdit: boolean;
   /** Last UID that was scanned but not found in the system */
   lastUnknownUid: string | null;
+  /** Whether simulation mode is active */
+  simulationActive: boolean;
+  /** UIDs scanned during the current simulation session */
+  simulatedScans: string[];
+  /** Whether the simulation banner was dismissed by the user */
+  simBannerHidden: boolean;
 }
 
 type Action =
@@ -57,6 +63,10 @@ type Action =
   | { type: 'TOGGLE_GLOBAL_EDIT' }
   | { type: 'UNKNOWN_SCAN'; uid: string }
   | { type: 'CLEAR_UNKNOWN_UID' }
+  | { type: 'START_SIMULATION' }
+  | { type: 'STOP_SIMULATION' }
+  | { type: 'HIDE_SIM_BANNER' }
+  | { type: 'SHOW_SIM_BANNER' }
   | { type: 'HYDRATE'; payload: Partial<StoreState> };
 
 // ─── Reducer ─────────────────────────────────────────────────────────────────
@@ -123,6 +133,10 @@ function reducer(state: StoreState, action: Action): StoreState {
             : l,
         ),
         recentScans: [action.uid, ...state.recentScans],
+        simulatedScans:
+          state.simulationActive && !state.simulatedScans.includes(action.uid)
+            ? [...state.simulatedScans, action.uid]
+            : state.simulatedScans,
       };
     }
 
@@ -137,6 +151,31 @@ function reducer(state: StoreState, action: Action): StoreState {
 
     case 'CLEAR_UNKNOWN_UID':
       return { ...state, lastUnknownUid: null };
+
+    case 'START_SIMULATION':
+      return { ...state, simulationActive: true, simulatedScans: [], simBannerHidden: false };
+
+    case 'HIDE_SIM_BANNER':
+      return { ...state, simBannerHidden: true };
+
+    case 'SHOW_SIM_BANNER':
+      return { ...state, simBannerHidden: false };
+
+    case 'STOP_SIMULATION': {
+      const scannedUids = state.simulatedScans;
+      const cleanedLectures = state.lectures.map(l =>
+        l.id === state.activeLectureId
+          ? { ...l, attendees: l.attendees.filter(uid => !scannedUids.includes(uid)) }
+          : l,
+      );
+      return {
+        ...state,
+        simulationActive: false,
+        simulatedScans: [],
+        lectures: cleanedLectures,
+        recentScans: [],
+      };
+    }
 
     default:
       return state;
@@ -153,6 +192,9 @@ function buildInitialState(): StoreState {
     recentScans: [],
     globalAllowSelfEdit: true,
     lastUnknownUid: null,
+    simulationActive: false,
+    simulatedScans: [],
+    simBannerHidden: false,
   };
 }
 
@@ -169,10 +211,16 @@ interface StoreContextValue {
   scanStudent: (uid: string) => void;
   toggleGlobalEdit: () => void;
   clearUnknownUid: () => void;
+  simulationActive: boolean;
+  simBannerHidden: boolean;
+  startSimulation: () => void;
+  stopSimulation: () => void;
+  hideSimBanner: () => void;
+  showSimBanner: () => void;
 }
 
 const StoreContext = createContext<StoreContextValue>({
-  state: { students: [], lectures: [], activeLectureId: null, recentScans: [], globalAllowSelfEdit: true, lastUnknownUid: null },
+  state: { students: [], lectures: [], activeLectureId: null, recentScans: [], globalAllowSelfEdit: true, lastUnknownUid: null, simulationActive: false, simulatedScans: [], simBannerHidden: false },
   activeLecture: null,
   addStudent: () => { },
   editStudent: () => { },
@@ -182,6 +230,12 @@ const StoreContext = createContext<StoreContextValue>({
   scanStudent: () => { },
   toggleGlobalEdit: () => { },
   clearUnknownUid: () => { },
+  simulationActive: false,
+  simBannerHidden: false,
+  startSimulation: () => { },
+  stopSimulation: () => { },
+  hideSimBanner: () => { },
+  showSimBanner: () => { },
 });
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -193,6 +247,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const { t, locale } = useLocale();
+
+  // ─── Refs for interval callbacks ──────────────────────────────────────────
+  const tRef = useRef(t);
+  const localeRef = useRef(locale);
+  const studentsRef = useRef(state.students);
+  const simulatedScansRef = useRef(state.simulatedScans);
+  const activeLectureIdRef = useRef(state.activeLectureId);
+
+  // Keep refs in sync after each render
+  useEffect(() => {
+    tRef.current = t;
+    localeRef.current = locale;
+    studentsRef.current = state.students;
+    simulatedScansRef.current = state.simulatedScans;
+    activeLectureIdRef.current = state.activeLectureId;
+  });
 
   const activeLecture =
     state.lectures.find(l => l.id === state.activeLectureId) ?? null;
@@ -226,88 +296,130 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  // Persist state to localStorage on changes
+  // Persist state to localStorage on changes (skip during simulation)
   useEffect(() => {
     if (!isMounted) return;
+    if (state.simulationActive) return;
     localStorage.setItem('hodor-store', JSON.stringify({
       students: state.students,
       lectures: state.lectures,
       globalAllowSelfEdit: state.globalAllowSelfEdit,
       activeLectureId: state.activeLectureId,
     }));
-  }, [state.students, state.lectures, state.globalAllowSelfEdit, state.activeLectureId, isMounted]);
+  }, [state.students, state.lectures, state.globalAllowSelfEdit, state.activeLectureId, state.simulationActive, isMounted]);
 
   // Sync active attendees to backend for ESP8266 duplicate detection screen
   useEffect(() => {
     if (!isMounted) return;
+    if (state.simulationActive) return;
     const attendees = activeLecture?.attendees || [];
     fetch('/api/sync_lecture', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ attendees }),
     }).catch(() => {});
-  }, [activeLecture?.attendees, isMounted]);
+  }, [activeLecture?.attendees, state.simulationActive, isMounted]);
 
-  // Hardware scanning polling interval
+  // Hardware scanning / simulation interval
   useEffect(() => {
     if (!state.activeLectureId) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
       return;
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/pending_scan';
+    if (state.simulationActive) {
+      // ── Simulation mode: generate mock scans at realistic intervals ──
+      const getDelay = () => 2500 + Math.random() * 4500;
 
-    intervalRef.current = setInterval(async () => {
-      try {
-        const res = await fetch(apiUrl);
-        if (!res.ok) return;
-        const data = await res.json();
+      const tick = () => {
+        const scans = simulatedScansRef.current;
+        const allStudents = studentsRef.current;
+        const lecId = activeLectureIdRef.current;
+        if (!lecId) return;
 
-        if (data && data.uid) {
-          // Consume the scan so we don't process it again
-          await fetch(apiUrl, {
-            method: 'DELETE',
+        const available = allStudents.filter(s => !scans.includes(s.uid));
+        const isUnknown = Math.random() < 0.08;
+
+        if (isUnknown || available.length === 0) {
+          const fakeUid = 'SIM_' + Math.random().toString(16).slice(2, 10).toUpperCase();
+          dispatch({ type: 'UNKNOWN_SCAN', uid: fakeUid });
+          toast.warning(`📡 ${localeRef.current === 'ar' ? 'بطاقة غير مسجلة' : 'Unknown Card: ' + fakeUid}`, {
+            description: localeRef.current === 'ar' ? 'بطاقة محاكاة غير مسجلة.' : 'Simulated unregistered card.',
+            duration: 3000,
           });
-
-          const attendees =
-            state.lectures.find(l => l.id === state.activeLectureId)?.attendees ?? [];
-
-          if (attendees.includes(data.uid)) {
-            // Already scanned in this lecture
-            return;
-          }
-
-          const target = state.students.find(s => s.uid === data.uid);
-
-          if (target) {
-            dispatch({
-              type: 'SCAN_STUDENT',
-              lectureId: state.activeLectureId!,
-              uid: target.uid,
-              scannedAt: new Date().toISOString(),
-            });
-            toast.success(`📡 ${locale === 'ar' ? target.nameAR : target.nameEN}`, {
-              description: t.toastNewScan,
-              duration: 2500,
-            });
-          } else {
-            dispatch({ type: 'UNKNOWN_SCAN', uid: data.uid });
-            toast.warning(`📡 ${locale === 'ar' ? 'بطاقة غير مسجلة' : 'Unknown Card: ' + data.uid}`, {
-              description: locale === 'ar' ? 'يجب تسجيل الطالب أولاً.' : 'Card not registered.',
-              duration: 3000,
-            });
-          }
+          return;
         }
-      } catch (err) {
-        // Silently ignore network errors during polling
-      }
-    }, 1500);
+
+        const idx = Math.floor(Math.random() * available.length);
+        const student = available[idx];
+
+        dispatch({
+          type: 'SCAN_STUDENT',
+          lectureId: lecId,
+          uid: student.uid,
+          scannedAt: new Date().toISOString(),
+        });
+
+        toast.success(`📡 ${localeRef.current === 'ar' ? student.nameAR : student.nameEN}`, {
+          description: tRef.current.toastNewScan,
+          duration: 2500,
+        });
+      };
+
+      tick();
+      intervalRef.current = setInterval(tick, getDelay());
+    } else {
+      // ── Real hardware polling ──
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/pending_scan';
+
+      intervalRef.current = setInterval(async () => {
+        try {
+          const res = await fetch(apiUrl);
+          if (!res.ok) return;
+          const data = await res.json();
+
+          if (data && data.uid) {
+            await fetch(apiUrl, { method: 'DELETE' });
+
+            const attendees =
+              state.lectures.find(l => l.id === state.activeLectureId)?.attendees ?? [];
+
+            if (attendees.includes(data.uid)) {
+              return;
+            }
+
+            const target = state.students.find(s => s.uid === data.uid);
+
+            if (target) {
+              dispatch({
+                type: 'SCAN_STUDENT',
+                lectureId: state.activeLectureId!,
+                uid: target.uid,
+                scannedAt: new Date().toISOString(),
+              });
+              toast.success(`📡 ${locale === 'ar' ? target.nameAR : target.nameEN}`, {
+                description: t.toastNewScan,
+                duration: 2500,
+              });
+            } else {
+              dispatch({ type: 'UNKNOWN_SCAN', uid: data.uid });
+              toast.warning(`📡 ${locale === 'ar' ? 'بطاقة غير مسجلة' : 'Unknown Card: ' + data.uid}`, {
+                description: locale === 'ar' ? 'يجب تسجيل الطالب أولاً.' : 'Card not registered.',
+                duration: 3000,
+              });
+            }
+          }
+        } catch (err) {
+          // Silently ignore network errors during polling
+        }
+      }, 1500);
+    }
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.activeLectureId, state.students]);
+  }, [state.activeLectureId, state.simulationActive]);
 
   const addStudent = useCallback((student: Student) => {
     dispatch({ type: 'ADD_STUDENT', student });
@@ -347,6 +459,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [state.activeLectureId],
   );
 
+  const startSimulation = useCallback(() => {
+    dispatch({ type: 'START_SIMULATION' });
+    toast.success(`🧪 ${tRef.current.simulationEnabled}`, {
+      description: tRef.current.simulationEnabledDesc,
+      duration: 6000,
+    });
+  }, []);
+
+  const stopSimulation = useCallback(() => {
+    dispatch({ type: 'STOP_SIMULATION' });
+  }, []);
+
+  const hideSimBanner = useCallback(() => {
+    dispatch({ type: 'HIDE_SIM_BANNER' });
+  }, []);
+
+  const showSimBanner = useCallback(() => {
+    dispatch({ type: 'SHOW_SIM_BANNER' });
+  }, []);
+
   return (
     <StoreContext.Provider
       value={{
@@ -360,6 +492,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         scanStudent,
         toggleGlobalEdit: useCallback(() => dispatch({ type: 'TOGGLE_GLOBAL_EDIT' }), []),
         clearUnknownUid: useCallback(() => dispatch({ type: 'CLEAR_UNKNOWN_UID' }), []),
+        simulationActive: state.simulationActive,
+        simBannerHidden: state.simBannerHidden,
+        startSimulation,
+        stopSimulation,
+        hideSimBanner,
+        showSimBanner,
       }}
     >
       {children}

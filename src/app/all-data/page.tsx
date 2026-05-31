@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
+import SimulationBanner from '@/components/SimulationBanner';
 import StudentRow from '@/components/StudentRow';
 import AddEntryModal from '@/components/AddEntryModal';
 import { useStore } from '@/contexts/StoreContext';
@@ -75,6 +76,7 @@ export default function AllDataPage() {
       <Navbar />
       
       <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
+        <SimulationBanner />
         <motion.div
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
