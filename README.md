@@ -46,7 +46,7 @@
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-repo/hodor.git
+   git clone https://github.com//Omar-Khaled-57/hodor/hodor.git
    cd hodor
    ```
 
